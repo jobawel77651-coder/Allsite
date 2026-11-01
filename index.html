@@ -112,10 +112,23 @@ function tick(){
   $('clock').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
 const dd=$('dots');for(let i=0;i<14;i++){const e=mk('i');e.style.left=(Math.random()*100)+'%';e.style.top=(60+Math.random()*50)+'%';e.style.animationDelay=(-Math.random()*9)+'s';e.style.animationDuration=(7+Math.random()*8)+'s';dd.append(e)}
+async function loadData(){
+  try{
+    const h=location.hostname;
+    if(h.endsWith('.github.io')){
+      const o=h.split('.')[0],seg=location.pathname.split('/')[1]||'';
+      const repo=(seg&&!seg.includes('.'))?seg:o+'.github.io';
+      const r=await fetch('https://api.github.com/repos/'+o+'/'+repo+'/contents/my-sites-data.json',{headers:{Accept:'application/vnd.github.raw+json'},cache:'no-store'});
+      if(r.ok)return JSON.parse(await r.text());
+    }
+  }catch(e){}
+  const r2=await fetch('my-sites-data.json?v='+Date.now(),{cache:'no-store'});
+  if(!r2.ok)throw 0;return r2.json();
+}
 tick();setInterval(tick,30000);
 $('lgo').onclick=()=>tryOpen($('lpw').value,false);
 $('lpw').onkeydown=e=>{if(e.key==='Enter')$('lgo').click()};
-fetch('my-sites-data.json?v='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()})
+loadData()
 .then(j=>{if(j.locked){J=j;showLock()}else render(j)}).catch(()=>{$('tag').textContent='Could not load my-sites-data.json. Open this page from your GitHub Pages link.'});
 </script>
 </body>
