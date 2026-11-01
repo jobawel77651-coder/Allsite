@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--c1:#19d3ff;--bg:#050816;--txt:#f4f6ff;--mut:#9fb0d6;--gl:rgba(255,255,255,.05);--bd:rgba(255,255,255,.14);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:'Outfit',system-ui,sans-serif;color:var(--txt);background:radial-gradient(700px 500px at 0% 0%,#06314a,transparent),radial-gradient(700px 500px at 100% 100%,#2a0e4a,transparent),var(--bg)}
+.wrap{max-width:460px;margin:0 auto;padding:14px 12px 50px}
+.shell{border:1px solid rgba(25,211,255,.4);border-radius:30px;padding:20px 16px;box-shadow:0 0 40px rgba(25,211,255,.14);animation:in .6s both}
+@keyframes in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+h1{margin:0 0 14px;font-size:26px;font-weight:800}
+h1 span{color:var(--c1);letter-spacing:2px;font-size:18px;margin-left:8px}
+h3{margin:18px 0 10px;color:var(--c1)}
+input{width:100%;font:inherit;font-size:16px;color:var(--txt);background:var(--gl);border:1px solid var(--bd);border-radius:14px;padding:10px 14px;margin-bottom:9px;outline:0}
+input:focus{border-color:var(--c1)}
+.r2{display:grid;grid-template-columns:70px 1fr;gap:9px}
+.b{font:inherit;font-weight:600;border:0;cursor:pointer;color:#fff;padding:10px 20px;border-radius:999px;background:linear-gradient(90deg,#19a8ff,#8a5cff);margin:4px 8px 0 0}
+.b.g{background:var(--gl);border:1px solid var(--bd)}
+.b.s{padding:6px 11px;font-size:13px;margin:0 0 0 4px}
+.b.x{background:#e11d48}
+.row{display:flex;gap:6px;align-items:center;padding:9px 0;border-bottom:1px solid var(--bd)}
+.row div{min-width:0;flex:1;overflow-wrap:anywhere;font-size:14px}
+.row small{color:var(--mut)}
+.msg{min-height:22px;color:var(--mut);font-size:14px;margin:6px 0}
+.ok{color:#22e07a}.er{color:#ff6b81}
+.hide{display:none!important}
+small.h{display:block;color:var(--mut);margin-bottom:10px;line-height:1.4}
+a{color:var(--c1)}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="shell">
+<h1>ADMIN<span>PANEL</span></h1>
+
+<div id="setup" class="hide">
+  <small class="h">First-time setup. Your GitHub token is stored only on this device, locked with your admin password.</small>
+  <input id="so" placeholder="GitHub username" autocapitalize="none" autocomplete="off">
+  <input id="sr" placeholder="Repository name" autocapitalize="none" autocomplete="off">
+  <input id="sb" placeholder="Branch" value="main" autocapitalize="none">
+  <input id="st" type="password" placeholder="GitHub token" autocomplete="off">
+  <input id="sp" type="password" placeholder="Choose admin password (min 6)" autocomplete="off">
+  <button class="b" id="sgo">Save and login</button>
+</div>
+
+<div id="login" class="hide">
+  <input id="lp" type="password" placeholder="Admin password" autocomplete="current-password">
+  <button class="b" id="lgo">Login</button>
+  <button class="b g" id="reset">Reset device</button>
+</div>
+
+<div id="panel" class="hide">
+  <h3 id="ft">Add website</h3>
+  <div class="r2"><input id="ni" placeholder="Icon" maxlength="4"><input id="nn" placeholder="Name"></div>
+  <input id="nu" placeholder="Link (example.com)" inputmode="url" autocapitalize="none">
+  <input id="nd" placeholder="Short description">
+  <input id="nb" placeholder="Badge (optional, e.g. FREE)" maxlength="8">
+  <button class="b" id="add">Add</button><button class="b g hide" id="cancel">Cancel edit</button>
+  <h3>Your websites</h3>
+  <div id="list"></div>
+  <h3>Page text</h3>
+  <input id="et" placeholder="Title"><input id="es" placeholder="Title accent word">
+  <input id="eg" placeholder="Welcome message"><input id="eb" placeholder="Made by name">
+  <button class="b g" id="txt">Apply text</button>
+  <h3>Site lock</h3>
+  <small class="h" id="lst"></small>
+  <input id="lpw" type="password" placeholder="Site lock password (min 4)" autocomplete="off">
+  <button class="b" id="lon">Lock site</button><button class="b g" id="loff">Unlock site</button>
+  <h3>Admin password</h3>
+  <input id="np" type="password" placeholder="New password (min 6)" autocomplete="new-password">
+  <button class="b g" id="cp">Change password</button>
+  <div class="msg" id="pmsg"></div>
+  <button class="b" id="pub">Publish changes</button>
+  <button class="b g" id="out">Logout</button>
+</div>
+<div class="msg" id="msg"></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const LS='site_admin_v1';
+let cfg=null,pw='',D=null,sha=null,edit=-1,dirty=false,locked=false;
+function mk(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function say(t,c){const m=$('msg');m.textContent=t||'';m.className='msg '+(c||'')}
+const enc=new TextEncoder(),dec=new TextDecoder();
+const b64=u=>btoa(String.fromCharCode(...u));
+const unb=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function key(p,salt){const k=await crypto.subtle.importKey('raw',enc.encode(p),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function lock(obj,p){const s=crypto.getRandomValues(new Uint8Array(16)),i=crypto.getRandomValues(new Uint8Array(12));const c=await crypto.subtle.encrypt({name:'AES-GCM',iv:i},await key(p,s),enc.encode(JSON.stringify(obj)));return JSON.stringify({s:b64(s),i:b64(i),d:b64(new Uint8Array(c))})}
+async function unlock(str,p){const o=JSON.parse(str);const d=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb(o.i)},await key(p,unb(o.s)),unb(o.d));return JSON.parse(dec.decode(d))}
+const safe=u=>{try{const x=new URL(u);return /^https?:$/.test(x.protocol)?x.href:null}catch(e){return null}};
+function api(path,opt){return fetch('https://api.github.com/repos/'+cfg.o+'/'+cfg.r+'/contents/'+path+(opt&&opt.method?'':'?ref='+encodeURIComponent(cfg.b)),Object.assign({headers:{Authorization:'Bearer '+cfg.t,Accept:'application/vnd.github+json'}},opt||{}))}
+function show(v){['setup','login','panel'].forEach(k=>$(k).classList.toggle('hide',k!==v))}
+function init(){let s=null;try{s=localStorage.getItem(LS)}catch(e){}show(s?'login':'setup')}
+$('sgo').onclick=async()=>{
+  const c={o:$('so').value.trim(),r:$('sr').value.trim(),b:$('sb').value.trim()||'main',t:$('st').value.trim()},p=$('sp').value;
+  if(!c.o||!c.r||!c.t){say('Fill in all GitHub fields.','er');return}
+  if(p.length<6){say('Password needs at least 6 characters.','er');return}
+  say('Checking...');cfg=c;
+  try{
+    const r=await fetch('https://api.github.com/repos/'+c.o+'/'+c.r,{headers:{Authorization:'Bearer '+c.t,Accept:'application/vnd.github+json'}});
+    if(!r.ok){say('GitHub rejected these details ('+r.status+').','er');return}
+    const j=await r.json();if(j.permissions&&!j.permissions.push){say('This token cannot write to the repository.','er');return}
+    pw=p;localStorage.setItem(LS,await lock(c,p));await enter();
+  }catch(e){say('Setup failed: '+e.message,'er')}
+};
+$('lgo').onclick=async()=>{
+  try{cfg=await unlock(localStorage.getItem(LS),$('lp').value);pw=$('lp').value;$('lp').value='';await enter()}
+  catch(e){say('Wrong password.','er')}
+};
+$('lp').onkeydown=e=>{if(e.key==='Enter')$('lgo').click()};
+$('reset').onclick=()=>{if(confirm('Remove saved login from this device?')){localStorage.removeItem(LS);say('');init()}};
+$('out').onclick=()=>{cfg=null;pw='';D=null;say('');init()};
+async function enter(){
+  say('Loading...');
+  try{
+    const r=await api('sites.json');
+    if(r.status===404){D={title:'MY',accent:'SITES',tag:'Welcome! Tap any card to open the website.',by:'ME',sites:[]};sha=null}
+    else if(r.ok){
+      const j=await r.json();sha=j.sha;const obj=JSON.parse(dec.decode(unb(j.content.replace(/\n/g,''))));
+      if(obj.locked){
+        let p=cfg.lp;
+        for(;;){
+          if(!p){p=prompt('The site is locked. Enter the site lock password:');if(!p){say('Lock password needed.','er');show('login');return}}
+          try{D=await unlock(JSON.stringify(obj),p);cfg.lp=p;locked=true;break}catch(e){p=null;alert('Wrong lock password')}
+        }
+      }else{D=obj;locked=false}
+    }
+    else{say('Could not load sites.json ('+r.status+').','er');show('login');return}
+    D.sites=D.sites||[];dirty=false;say('');show('panel');fill();render();lstat();
+  }catch(e){say('Load failed: '+e.message,'er');show('login')}
+}
+function lstat(){$('lst').textContent=locked?'Status: LOCKED. Visitors need the lock password to open the site.':'Status: open to everyone.'}
+async function persist(){localStorage.setItem(LS,await lock(cfg,pw))}
+function fill(){$('et').value=D.title||'';$('es').value=D.accent||'';$('eg').value=D.tag||'';$('eb').value=D.by||''}
+function render(){
+  const l=$('list');l.innerHTML='';
+  if(!D.sites.length)l.append(mk('small','h','No websites yet.'));
+  D.sites.forEach((x,i)=>{
+    const r=mk('div','row'),d=mk('div');d.append(mk('b',0,(x.icon||'')+' '+x.name),mk('br'),mk('small',0,x.url));
+    const up=mk('button','b g s','\u25b2'),ed=mk('button','b g s','Edit'),del=mk('button','b x s','X');
+    up.onclick=()=>{if(i>0){[D.sites[i-1],D.sites[i]]=[D.sites[i],D.sites[i-1]];mark();render()}};
+    ed.onclick=()=>{edit=i;$('ni').value=x.icon||'';$('nn').value=x.name;$('nu').value=x.url;$('nd').value=x.desc||'';$('nb').value=x.badge||'';$('ft').textContent='Edit website';$('add').textContent='Update';$('cancel').classList.remove('hide');scrollTo(0,0)};
+    del.onclick=()=>{if(confirm('Delete this website?')){D.sites.splice(i,1);mark();render()}};
+    r.append(d,up,ed,del);l.append(r);
+  });
+}
+function mark(){dirty=true;say('Unpublished changes. Tap Publish changes.')}
+function reset(){edit=-1;['ni','nn','nu','nd','nb'].forEach(k=>$(k).value='');$('ft').textContent='Add website';$('add').textContent='Add';$('cancel').classList.add('hide')}
+$('cancel').onclick=reset;
+$('add').onclick=()=>{
+  const n=$('nn').value.trim();let u=$('nu').value.trim();
+  if(!n||!u){say('Name and link are required.','er');return}
+  if(!/^https?:\/\//i.test(u))u='https://'+u;
+  if(!safe(u)){say('Invalid link.','er');return}
+  const o={name:n,url:u,desc:$('nd').value.trim(),icon:$('ni').value.trim()||'\ud83c\udf10',badge:$('nb').value.trim()};
+  if(edit>=0)D.sites[edit]=o;else D.sites.push(o);
+  reset();mark();render();
+};
+$('txt').onclick=()=>{D.title=$('et').value.trim()||D.title;D.accent=$('es').value.trim()||D.accent;D.tag=$('eg').value.trim()||D.tag;D.by=$('eb').value.trim()||D.by;mark()};
+$('lon').onclick=async()=>{
+  const v=$('lpw').value||cfg.lp||'';
+  if(v.length<4){say('Lock password needs at least 4 characters.','er');return}
+  cfg.lp=v;locked=true;await persist();$('lpw').value='';lstat();mark();
+};
+$('loff').onclick=async()=>{locked=false;delete cfg.lp;await persist();lstat();mark()};
+$('cp').onclick=async()=>{
+  const v=$('np').value,m=$('pmsg');
+  if(v.length<6){m.textContent='Minimum 6 characters.';return}
+  pw=v;localStorage.setItem(LS,await lock(cfg,v));$('np').value='';m.textContent='Password changed on this device.';
+};
+$('pub').onclick=async()=>{
+  say('Publishing...');
+  try{
+    let body;
+    if(locked){const e=JSON.parse(await lock(D,cfg.lp));e.locked=true;body=JSON.stringify(e,null,2)+'\n'}
+    else body=JSON.stringify(D,null,2)+'\n';
+    const r=await api('sites.json',{method:'PUT',body:JSON.stringify({message:'Update sites',content:b64(enc.encode(body)),branch:cfg.b,sha:sha||undefined})});
+    if(!r.ok){const j=await r.json().catch(()=>({}));say('Publish failed ('+r.status+'): '+(j.message||''),'er');return}
+    const j=await r.json();sha=j.content.sha;dirty=false;
+    say('Published. It goes live in about a minute.','ok');
+  }catch(e){say('Publish failed: '+e.message,'er')}
+};
+addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+init();
+</script>
+</body>
+</html>

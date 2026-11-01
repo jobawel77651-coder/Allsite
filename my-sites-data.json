@@ -1,0 +1,9 @@
+{
+  "title": "MY",
+  "accent": "SITES",
+  "tag": "Welcome! Tap any card to open the website.",
+  "by": "ME",
+  "sites": [
+    { "name": "Sample Site", "url": "https://example.com", "desc": "Replace this from the admin panel", "icon": "🚀", "badge": "FREE" }
+  ]
+}
