@@ -3,5 +3,13 @@
   "accent": "SITES",
   "tag": "Welcome! Tap any card to open the website.",
   "by": "ME",
-  "sites": []
+  "sites": [
+    {
+      "name": "H",
+      "url": "https://rakibahmed59319-bit.github.io/rakib.pps.live1/",
+      "desc": "G",
+      "icon": "👹",
+      "badge": "Free"
+    }
+  ]
 }
