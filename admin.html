@@ -118,7 +118,7 @@ $('out').onclick=()=>{cfg=null;pw='';D=null;say('');init()};
 async function enter(){
   say('Loading...');
   try{
-    const r=await api('sites.json');
+    const r=await api('my-sites-data.json');
     if(r.status===404){D={title:'MY',accent:'SITES',tag:'Welcome! Tap any card to open the website.',by:'ME',sites:[]};sha=null}
     else if(r.ok){
       const j=await r.json();sha=j.sha;const obj=JSON.parse(dec.decode(unb(j.content.replace(/\n/g,''))));
@@ -130,7 +130,7 @@ async function enter(){
         }
       }else{D=obj;locked=false}
     }
-    else{say('Could not load sites.json ('+r.status+').','er');show('login');return}
+    else{say('Could not load my-sites-data.json ('+r.status+').','er');show('login');return}
     D.sites=D.sites||[];dirty=false;say('');show('panel');fill();render();lstat();
   }catch(e){say('Load failed: '+e.message,'er');show('login')}
 }
@@ -179,7 +179,7 @@ $('pub').onclick=async()=>{
     let body;
     if(locked){const e=JSON.parse(await lock(D,cfg.lp));e.locked=true;body=JSON.stringify(e,null,2)+'\n'}
     else body=JSON.stringify(D,null,2)+'\n';
-    const r=await api('sites.json',{method:'PUT',body:JSON.stringify({message:'Update sites',content:b64(enc.encode(body)),branch:cfg.b,sha:sha||undefined})});
+    const r=await api('my-sites-data.json',{method:'PUT',body:JSON.stringify({message:'Update sites',content:b64(enc.encode(body)),branch:cfg.b,sha:sha||undefined})});
     if(!r.ok){const j=await r.json().catch(()=>({}));say('Publish failed ('+r.status+'): '+(j.message||''),'er');return}
     const j=await r.json();sha=j.content.sha;dirty=false;
     say('Published. It goes live in about a minute.','ok');
